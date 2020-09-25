@@ -67,12 +67,14 @@ const Signin: React.FC = () => {
           </Container>
         </ScrollView>
       </KeyboardAvoidingView>
+
       {Platform.OS === 'android' && keyboardOn === false && (
         <BackToSignin onPress={() => goBack()}>
           <Icon name="arrow-left" size={20} color="#f4ede8" />
           <BackToSigninText>Voltar para login</BackToSigninText>
         </BackToSignin>
       )}
+
       {Platform.OS === 'ios' && (
         <BackToSignin onPress={() => goBack()}>
           <Icon name="arrow-left" size={20} color="#f4ede8" />
