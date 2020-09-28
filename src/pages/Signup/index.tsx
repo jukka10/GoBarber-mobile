@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
   Platform,
   View,
   ScrollView,
-  Keyboard,
   TextInput,
   Alert,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { FormHandles } from '@unform/core';
 import * as Yup from 'yup';
 
 import getValidationError from '../../utils/getValidationErrors';
+import api from '../../services/api';
 
 import logoImage from '../../assets/logo.png';
 import Button from '../../components/Button';
@@ -30,62 +30,54 @@ interface SignUpProp {
 }
 
 const Signin: React.FC = () => {
-  const [keyboardOn, setKeyboardOn] = useState(false);
-
   const formRef = useRef<FormHandles>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
   const { goBack } = useNavigation();
 
-  useEffect(() => {
-    Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardOn(true);
-    });
-    Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardOn(false);
-    });
-  }, [Keyboard]);
+  const handleClick = useCallback(
+    async (data: SignUpProp) => {
+      try {
+        formRef.current?.setErrors({});
 
-  const handleClick = useCallback(async (data: SignUpProp) => {
-    try {
-      formRef.current?.setErrors({});
+        const schema = Yup.object().shape({
+          password: Yup.string().min(6, 'No mínimo 6 digitos').required(),
+          name: Yup.string().required('Nome obrigatório'),
+          email: Yup.string()
+            .required('Email obrigatório')
+            .email('Digite um email válido'),
+        });
 
-      const schema = Yup.object().shape({
-        password: Yup.string().min(6, 'No mínimo 6 digitos').required(),
-        name: Yup.string().required('Nome obrigatório'),
-        email: Yup.string()
-          .required('Email obrigatório')
-          .email('Digite um email válido'),
-      });
+        await schema.validate(data, {
+          abortEarly: false,
+        });
 
-      await schema.validate(data, {
-        abortEarly: false,
-      });
+        console.log(data.password);
 
-      console.log(data.password);
+        await api.post('/users', data);
 
-      // await api.post('/users', data);
-
-      Alert.alert(
-        'Cadastro Realizado',
-        'Você já pode fazer seu login no GoBarber',
-      );
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        const errors = getValidationError(err);
-        console.log(errors);
-
-        formRef.current?.setErrors(errors);
-
-        return;
-      } else {
         Alert.alert(
-          'Erro ao cadastrar',
-          'Ocorreu um erro ao fazer cadastro, tente novamente',
+          'Cadastro Realizado',
+          'Você já pode fazer seu login no GoBarber',
         );
+        goBack();
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationError(err);
+
+          formRef.current?.setErrors(errors);
+
+          return;
+        } else {
+          Alert.alert(
+            'Erro ao cadastrar',
+            'Ocorreu um erro ao fazer cadastro, tente novamente',
+          );
+        }
       }
-    }
-  }, []);
+    },
+    [goBack],
+  );
 
   return (
     <>
@@ -147,19 +139,10 @@ const Signin: React.FC = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {Platform.OS === 'android' && keyboardOn === false && (
-        <BackToSignin onPress={() => goBack()}>
-          <Icon name="arrow-left" size={20} color="#f4ede8" />
-          <BackToSigninText>Voltar para login</BackToSigninText>
-        </BackToSignin>
-      )}
-
-      {Platform.OS === 'ios' && (
-        <BackToSignin onPress={() => goBack()}>
-          <Icon name="arrow-left" size={20} color="#f4ede8" />
-          <BackToSigninText>Voltar para login</BackToSigninText>
-        </BackToSignin>
-      )}
+      <BackToSignin onPress={() => goBack()}>
+        <Icon name="arrow-left" size={20} color="#f4ede8" />
+        <BackToSigninText>Voltar para login</BackToSigninText>
+      </BackToSignin>
     </>
   );
 };

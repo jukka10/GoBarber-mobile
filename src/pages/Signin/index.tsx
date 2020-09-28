@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
   Platform,
   View,
   ScrollView,
-  Keyboard,
   TextInput,
   Alert,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { FormHandles } from '@unform/core';
 import * as Yup from 'yup';
 
 import getValidationError from '../../utils/getValidationErrors';
+import { useAuth } from '../../contexts/AuthContext';
 
 import logoImage from '../../assets/logo.png';
 import Button from '../../components/Button';
@@ -36,21 +36,12 @@ interface SignInFormData {
 }
 
 const Signin: React.FC = () => {
-  const [keyboardOn, setKeyboardOn] = useState(false);
+  const { signIn } = useAuth();
 
   const formRef = useRef<FormHandles>(null);
   const passwordInputRef = useRef<TextInput>(null);
 
   const { navigate } = useNavigation();
-
-  useEffect(() => {
-    Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardOn(true);
-    });
-    Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardOn(false);
-    });
-  }, [Keyboard]);
 
   const handleClick = useCallback(
     async ({ email, password }: SignInFormData) => {
@@ -69,11 +60,11 @@ const Signin: React.FC = () => {
             abortEarly: false,
           },
         );
+
+        await signIn({ email, password });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
           const errors = getValidationError(err);
-
-          console.log(errors);
 
           formRef.current?.setErrors(errors);
 
@@ -86,7 +77,7 @@ const Signin: React.FC = () => {
         );
       }
     },
-    [],
+    [signIn],
   );
   return (
     <>
@@ -140,18 +131,11 @@ const Signin: React.FC = () => {
           </Container>
         </ScrollView>
       </KeyboardAvoidingView>
-      {Platform.OS === 'android' && keyboardOn === false && (
-        <CreateAccount onPress={() => navigate('Signup')}>
-          <Icon name="log-in" size={20} color="#ff9000" />
-          <CreateAccountText>Criar uma conta</CreateAccountText>
-        </CreateAccount>
-      )}
-      {Platform.OS === 'ios' && (
-        <CreateAccount onPress={() => navigate('Signup')}>
-          <Icon name="log-in" size={20} color="#ff9000" />
-          <CreateAccountText>Criar uma conta</CreateAccountText>
-        </CreateAccount>
-      )}
+
+      <CreateAccount onPress={() => navigate('Signup')}>
+        <Icon name="log-in" size={20} color="#ff9000" />
+        <CreateAccountText>Criar uma conta</CreateAccountText>
+      </CreateAccount>
     </>
   );
 };
