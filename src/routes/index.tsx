@@ -1,23 +1,23 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { ActivityIndicator, View } from 'react-native';
 
-import Signin from '../pages/Signin/index';
-import Signup from '../pages/Signup/index';
+import Auth from './auth.routes';
+import App from './app.routes';
 
-const { Navigator, Screen } = createStackNavigator();
+import { useAuth } from '../contexts/AuthContext';
 
-const Auth: React.FC = () => {
-  return (
-    <Navigator
-      screenOptions={{
-        headerShown: false,
-        cardStyle: { backgroundColor: '#312e38' },
-      }}
-    >
-      <Screen name="Signin" component={Signin} />
-      <Screen name="Signup" component={Signup} />
-    </Navigator>
-  );
+const Routes: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#999" />
+      </View>
+    );
+  }
+
+  return user ? <App /> : <Auth />;
 };
 
-export default Auth;
+export default Routes;
